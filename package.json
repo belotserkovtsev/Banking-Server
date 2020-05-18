@@ -4,14 +4,14 @@
   "description": "Basic client-server banking application",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "run": "node ./src/index.js"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/belotserkovtsev/Banking-Server.git"
   },
   "author": "belotserkovtsev",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/belotserkovtsev/Banking-Server/issues"
   },
