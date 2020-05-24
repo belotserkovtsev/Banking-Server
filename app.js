@@ -23,14 +23,10 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 passport.use(new LocalStrategy(async (username, password, done) => {
-    let userdata = await User.get(username);
+    let userdata = await User.check(username, password);
     if(!userdata){
         return done(null, false);
     }
-    if(!await User.checkPassword(username, password)){
-        return done(null, false);
-    }
-    // console.log(userdata[0])
     return done(null, userdata[0]);
 }))
 
@@ -59,12 +55,24 @@ app.get('/', (req, res) => {
 app.post('/', auth);
 
 app.get('/register', (req, res) => {
-    res.render('register');
+    res.render('register', {
+        username: req.query.username,
+        password: req.query.password,
+        firstname: req.query.firstname,
+        lastname: req.query.lastname
+    });
 });
 
-app.post('/register', (req, res) => {
-    console.log(req);
-    User.add(req.body.username, rew.body.firstname, req.body.lastname, req.body.password);
+app.post('/register', async (req, res) => {
+    // console.log(req);
+    if(!req.body.username || !req.body.firstname || !req.body.lastname || !req.body.password || await User.exists(req.body.username)){
+        res.redirect(`/register?username=${req.body.username}&firstname=${req.body.firstname}&lastname=${req.body.lastname}`);
+    }
+    else{
+        await User.add(req.body.username, req.body.firstname, req.body.lastname, req.body.password);
+        res.redirect('/');
+    }
+    
 })
 
 const mustBeAuth = (req, res, next) => {
@@ -85,6 +93,17 @@ app.get('/user', (req, res) => {
         balance: req.user.balance,
         username: req.user.username
     });
+})
+
+app.post('/user/add-balance', (req, res) => {
+    if(req.body.amount > 0)
+        User.addBalance(req.user.username, req.body.amount);
+    res.redirect('/user');
+});
+
+app.post('/user/logout', (req, res) => {
+    req.session = null;
+    res.redirect('/');
 })
 
 app.listen(8888);

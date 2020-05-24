@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/belotserkovtsev/Banking-Server#readme",
   "dependencies": {
+    "bcrypt": "^4.0.1",
     "body-parser": "^1.19.0",
     "consolidate": "^0.15.1",
     "cookie-parser": "^1.4.5",

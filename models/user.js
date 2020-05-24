@@ -1,4 +1,7 @@
 const mysql = require('mysql');
+const bcrypt = require('bcrypt');
+
+const saltRounds = 10;
 
 const pool = mysql.createPool({
     host: '127.0.0.1',
@@ -8,30 +11,48 @@ const pool = mysql.createPool({
 });
 
 class User{
-    static add(username, firstname, lastname, password){
-        
-    }
 
-    static addBalance(username, amount){
-
-    }
-
-    static async checkPassword(login, password){
+    static async add(username, firstname, lastname, password){
         return new Promise((resolve, reject) => {
-            pool.getConnection((err, connection) => {
+            pool.getConnection(async (err, connection) => {
+                if(err)
+                    reject(err);
+                // let passHash = passwordHash.generate(password);
+                let hashPass = await bcrypt.hash(password, saltRounds);
+                // console.log(passHash);
+                connection.query('insert into users (username, firstname, lastname, password, balance) values (?, ?, ?, ?, 0)', [username, firstname, lastname, hashPass], (err, rows) => {
+                    connection.release();
+
+                    if(err){
+                        reject(err);
+                    }
+
+                    resolve(rows);
+
+                })
+            })
+        })
+        .catch(err => {
+            return false;
+        });
+    }
+
+    static async exists(username){
+        return new Promise((resolve, reject) => {
+            pool.getConnection(async (err, connection) => {
                 if(err)
                     reject (err)
-                connection.query(`select * from users where username = "${login}" and password = "${password}"`, (err, rows) => {
+                connection.query(`select * from users where username = "${username}"`, (err, rows) => {
                     connection.release();
 
                     if(err){
                         reject(err)
                     }
 
-                    if(rows.length && rows[0].password == password)
-                        resolve(rows);
-                    else
-                        reject('Wrong pass');
+                    if(!rows.length)
+                        reject('No user found!')
+
+                    resolve(rows);
                 })
             })
         })
@@ -40,15 +61,12 @@ class User{
         })
     }
 
-    static async get(login){
+    static addBalance(username, amount){
         return new Promise((resolve, reject) => {
-            pool.getConnection((err, connection) => {
-
-                if(err){
+            pool.getConnection(async (err, connection) => {
+                if(err)
                     reject(err);
-                }
-
-                connection.query(`select * from users where username = "${login}"`, (err, rows) => {
+                connection.query('update users set balance = balance + ? where username = ?', [amount, username], (err, rows) => {
                     connection.release();
 
                     if(err){
@@ -56,6 +74,73 @@ class User{
                     }
 
                     resolve(rows);
+
+                })
+            })
+        })
+        .catch(err => {
+            return false;
+        });
+    }
+
+    static async check(login, password){
+        return new Promise((resolve, reject) => {
+            pool.getConnection(async (err, connection) => {
+
+                if(err){
+                    reject(err);
+                }
+
+                connection.query(`select * from users where username = ?`, [login], (err, rows) => {
+                    connection.release();
+
+                    if(err){
+                        reject(err);
+                    }
+
+                    if(!rows.length){
+                        reject('No user found')
+                    }
+                    // console.log(rows[0])
+                    bcrypt.compare(password, rows[0].password, (err, result) => {
+                        if(err)
+                            reject (err);
+                        if(result)
+                            resolve(rows);
+                        else
+                            reject('Passwords dont match')
+                    });
+
+                    
+                });
+            });
+        }).catch(err => {
+            return false;
+        })
+    }
+
+    static async get(login){
+        return new Promise((resolve, reject) => {
+            pool.getConnection(async (err, connection) => {
+
+                if(err){
+                    reject(err);
+                }
+
+                connection.query(`select * from users where username = ?`, [login], (err, rows) => {
+                    connection.release();
+
+                    if(err){
+                        reject(err);
+                    }
+
+                    if(!rows.length){
+                        reject('No user found')
+                    }
+
+                    resolve(rows);
+
+                    
                 });
             });
         }).catch(err => {
