@@ -15,5 +15,16 @@
   "bugs": {
     "url": "https://github.com/belotserkovtsev/Banking-Server/issues"
   },
-  "homepage": "https://github.com/belotserkovtsev/Banking-Server#readme"
+  "homepage": "https://github.com/belotserkovtsev/Banking-Server#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "consolidate": "^0.15.1",
+    "cookie-parser": "^1.4.5",
+    "cookie-session": "^1.4.0",
+    "express": "^4.17.1",
+    "handlebars": "^4.7.6",
+    "mysql": "^2.18.1",
+    "passport": "^0.4.1",
+    "passport-local": "^1.0.0"
+  }
 }
