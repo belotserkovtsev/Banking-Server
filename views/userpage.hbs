@@ -1,1 +1,21 @@
 <h1>Hello, {{name}}</h1>
+<p>
+    Balance: ${{balance}}<br>
+    Username: {{username}} (Used for money transfer)
+</p>
+
+<form action="" method="post">
+  <input id="POST-name" placeholder="Amount" type="text" name="addbalance">
+  <br>
+  <input type="submit" value="Add balance">
+</form>
+
+<br>
+
+<form action="" method="post">
+  <input id="POST-name" placeholder="Tranfer to" type="text" name="transferto">
+  <br>
+  <input id="POST-name" placeholder="Amount" type="text" name="amount">
+  <br>
+  <input type="submit" value="Transfer money">
+</form>

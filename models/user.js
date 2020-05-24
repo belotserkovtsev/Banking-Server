@@ -8,11 +8,15 @@ const pool = mysql.createPool({
 });
 
 class User{
-    static add(){
+    static add(username, firstname, lastname, password){
         
     }
 
-    static checkPassword(login, password){
+    static addBalance(username, amount){
+
+    }
+
+    static async checkPassword(login, password){
         return new Promise((resolve, reject) => {
             pool.getConnection((err, connection) => {
                 if(err)
@@ -36,7 +40,7 @@ class User{
         })
     }
 
-    static get(login){
+    static async get(login){
         return new Promise((resolve, reject) => {
             pool.getConnection((err, connection) => {
 

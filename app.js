@@ -16,9 +16,9 @@ app.set('view engine', 'hbs')
 app.set('views', './views')
 
 app.use(cookieParser('secret'))
-app.use(session({keys:['secret']}))
 app.use(bodyParser.urlencoded()); 
 
+app.use(session({keys:['secret']}))
 app.use(passport.initialize())
 app.use(passport.session())
 
@@ -50,15 +50,41 @@ const auth = passport.authenticate('local', {
 })
 
 app.get('/', (req, res) => {
-    res.render('index', {});
+    if(!req.isAuthenticated())
+        res.render('index', {});
+    else
+        res.redirect('/user')
 });
+
+app.post('/', auth);
+
+app.get('/register', (req, res) => {
+    res.render('register');
+});
+
+app.post('/register', (req, res) => {
+    console.log(req);
+    User.add(req.body.username, rew.body.firstname, req.body.lastname, req.body.password);
+})
+
+const mustBeAuth = (req, res, next) => {
+    if(req.isAuthenticated()){
+        next();
+    }
+    else{
+        res.redirect('/');
+    }
+}
+
+app.all('/user', mustBeAuth);
+app.all('/user/*', mustBeAuth);
 
 app.get('/user', (req, res) => {
     res.render('userpage', {
-        name: req.user.firstname
+        name: req.user.firstname,
+        balance: req.user.balance,
+        username: req.user.username
     });
 })
-
-app.post('/', auth);
 
 app.listen(8888);
