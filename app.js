@@ -104,6 +104,15 @@ app.post('/user/add-balance', (req, res) => {
 app.post('/user/logout', (req, res) => {
     req.session = null;
     res.redirect('/');
+});
+
+app.post('/user/transfer', async (req, res) => {
+    if(req.body.amount > 0){
+        User.transfer(req.user.username, req.body.to, req.body.amount).then(res => {
+            console.log(res);
+        })
+    }
+    res.redirect('/user');
 })
 
 app.listen(8888);

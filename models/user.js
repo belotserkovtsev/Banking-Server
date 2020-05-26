@@ -15,8 +15,10 @@ class User{
     static async add(username, firstname, lastname, password){
         return new Promise((resolve, reject) => {
             pool.getConnection(async (err, connection) => {
-                if(err)
+                if(err){
+                    connection.release();
                     reject(err);
+                }
                 // let passHash = passwordHash.generate(password);
                 let hashPass = await bcrypt.hash(password, saltRounds);
                 // console.log(passHash);
@@ -40,8 +42,10 @@ class User{
     static async exists(username){
         return new Promise((resolve, reject) => {
             pool.getConnection(async (err, connection) => {
-                if(err)
+                if(err){
+                    connection.release();
                     reject (err)
+                }
                 connection.query(`select * from users where username = "${username}"`, (err, rows) => {
                     connection.release();
 
@@ -61,11 +65,13 @@ class User{
         })
     }
 
-    static addBalance(username, amount){
+    static async addBalance(username, amount){
         return new Promise((resolve, reject) => {
             pool.getConnection(async (err, connection) => {
-                if(err)
+                if(err){
+                    connection.release();
                     reject(err);
+                }
                 connection.query('update users set balance = balance + ? where username = ?', [amount, username], (err, rows) => {
                     connection.release();
 
@@ -88,12 +94,12 @@ class User{
             pool.getConnection(async (err, connection) => {
 
                 if(err){
+                    connection.release();
                     reject(err);
                 }
 
                 connection.query(`select * from users where username = ?`, [login], (err, rows) => {
                     connection.release();
-
                     if(err){
                         reject(err);
                     }
@@ -124,6 +130,7 @@ class User{
             pool.getConnection(async (err, connection) => {
 
                 if(err){
+                    connection.release();
                     reject(err);
                 }
 
@@ -148,8 +155,49 @@ class User{
         })
     }
 
-    static delete(){
-
+    static transfer(from, to, amount){
+        return new Promise((resolve, reject) => {
+            pool.getConnection((err, connection) => {
+                if(err){
+                    connection.release();
+                    reject(err);
+                }
+                connection.beginTransaction((err) => {
+                    if(err){
+                        connection.release();
+                        reject(err);
+                    }
+                    connection.query('update users set balance = balance - ? where username = ?', [amount, from], (err, rows) => {
+                        if(err){
+                            connection.rollback(() => {
+                                connection.release();
+                                reject(err);
+                            })
+                        }
+                        connection.query('update users set balance = balance + ? where username = ?', [amount, to], (err, rows) => {
+                            if(err){
+                                connection.rollback(() => {
+                                    connection.release();
+                                    reject(err)
+                                })
+                            }
+                            connection.commit((err) => {
+                                if(err){
+                                    connection.rollback(() => {
+                                        connection.release();
+                                        reject(err);
+                                    })
+                                }
+                                resolve(true);
+                            })
+                        })
+                    })
+                })
+            })
+        })
+        .catch(err => {
+            return false;
+        })
     }
 }
 
