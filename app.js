@@ -106,10 +106,14 @@ app.post('/user/logout', (req, res) => {
     res.redirect('/');
 });
 
-app.post('/user/transfer', async (req, res) => {
+app.post('/user/transfer', (req, res) => {
     if(req.body.amount > 0){
-        User.transfer(req.user.username, req.body.to, req.body.amount).then(res => {
+        User.transfer(req.user.username, req.body.to, req.body.amount)
+        .then(res => {
             console.log(res);
+        })
+        .catch(err => {
+            console.log(false)
         })
     }
     res.redirect('/user');
