@@ -34,12 +34,11 @@ passport.use(new LocalStrategy(async (username, password, done) => {
 }))
 
 passport.serializeUser((user, done) => {
-    // console.log(user);
     done(null, user.username);
 })
 
-passport.deserializeUser(async (user, done) => {
-    await User.get(user)
+passport.deserializeUser((user, done) => {
+    User.get(user)
     .then(res => {
         done(null, res[0]);
     })
