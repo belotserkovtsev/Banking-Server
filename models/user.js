@@ -140,7 +140,7 @@ class User{
         })
     }
 
-    /* static isBalance(amount, user){
+    static isBalance(amount, user){
         return new Promise((resolve, reject) => {
             pool.getConnection(async (err, connection) => {
 
@@ -167,7 +167,7 @@ class User{
                 });
             });
         })
-    } */
+    }
 
     static transfer(from, to, amount){
         return new Promise((resolve, reject) => {
@@ -178,22 +178,13 @@ class User{
                     return;
                 }
                 connection.beginTransaction((err) => {
-                    
-                    if(err){
-                        connection.release();
-                        reject(err);
-                        return;
-                    }
-                    connection.query('update users set balance = balance - ? where username = ?', [amount, from], (err, rows) => {
+                    setTimeout(() => {
                         if(err){
-                            connection.rollback(() => {
-                                connection.release();
-                                reject(err);
-                                return;
-                            })
+                            connection.release();
+                            reject(err);
+                            return;
                         }
-                        console.log('transfering...')
-                        connection.query('update users set balance = balance + ? where username = ?', [amount, to], (err, rows) => {
+                        connection.query('update users set balance = balance - ? where username = ?', [amount, from], (err, rows) => {
                             if(err){
                                 connection.rollback(() => {
                                     connection.release();
@@ -201,7 +192,8 @@ class User{
                                     return;
                                 })
                             }
-                            connection.commit((err) => {
+                            console.log('transfering...')
+                            connection.query('update users set balance = balance + ? where username = ?', [amount, to], (err, rows) => {
                                 if(err){
                                     connection.rollback(() => {
                                         connection.release();
@@ -209,10 +201,20 @@ class User{
                                         return;
                                     })
                                 }
-                                resolve(true);
+                                connection.commit((err) => {
+                                    if(err){
+                                        connection.rollback(() => {
+                                            connection.release();
+                                            reject(err);
+                                            return;
+                                        })
+                                    }
+                                    resolve(true);
+                                })
                             })
                         })
-                    })
+                    }, 15000)
+                    
                 })
                 
             })

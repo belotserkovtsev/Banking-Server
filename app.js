@@ -9,6 +9,9 @@ const consolidate = require('consolidate');
 
 const User = require('./models/user.js');
 
+const AsyncLock = require('async-lock');
+const lock = new AsyncLock();
+
 const app = express();
 
 app.engine('hbs', consolidate.handlebars);
@@ -130,13 +133,18 @@ app.post('/user/logout', (req, res) => {
 app.post('/user/transfer', (req, res) => {
     User.exists(req.body.to)
     .then(res => {
-        if(req.body.amount > 0 && req.body.amount <= req.user.balance){
-            User.transfer(req.user.username, req.body.to, req.body.amount)
+        if(req.body.amount > 0){
+            lock.acquire('key', () => {
+                return User.isBalance(req.body.amount, req.user.username)
+                .then(res => {
+                    return User.transfer(req.user.username, req.body.to, req.body.amount);
+                })
+            }, [])
             .then(res => {
-                console.log(res);
+                console.log('lock released')
             })
             .catch(err => {
-                console.log(false)
+                console.log(err.message);
             })
         }
         else{
