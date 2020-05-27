@@ -12,7 +12,7 @@ const pool = mysql.createPool({
 
 class User{
 
-    static async add(username, firstname, lastname, password){
+    static add(username, firstname, lastname, password){
         return new Promise((resolve, reject) => {
             pool.getConnection(async (err, connection) => {
                 if(err){
@@ -34,14 +34,11 @@ class User{
                 })
             })
         })
-        .catch(err => {
-            return false;
-        });
     }
 
-    static async exists(username){
+    static exists(username){
         return new Promise((resolve, reject) => {
-            pool.getConnection(async (err, connection) => {
+            pool.getConnection((err, connection) => {
                 if(err){
                     connection.release();
                     reject (err)
@@ -54,20 +51,17 @@ class User{
                     }
 
                     if(!rows.length)
-                        reject('No user found!')
+                        reject(new Error('No user found!'))
 
-                    resolve(rows);
+                    resolve(true);
                 })
             })
         })
-        .catch(err => {
-            return false;
-        })
     }
 
-    static async addBalance(username, amount){
+    static addBalance(username, amount){
         return new Promise((resolve, reject) => {
-            pool.getConnection(async (err, connection) => {
+            pool.getConnection((err, connection) => {
                 if(err){
                     connection.release();
                     reject(err);
@@ -84,14 +78,11 @@ class User{
                 })
             })
         })
-        .catch(err => {
-            return false;
-        });
     }
 
-    static async check(login, password){
+    static check(login, password){
         return new Promise((resolve, reject) => {
-            pool.getConnection(async (err, connection) => {
+            pool.getConnection((err, connection) => {
 
                 if(err){
                     connection.release();
@@ -120,14 +111,12 @@ class User{
                     
                 });
             });
-        }).catch(err => {
-            return false;
         })
     }
 
-    static async get(login){
+    static get(login){
         return new Promise((resolve, reject) => {
-            pool.getConnection(async (err, connection) => {
+            pool.getConnection((err, connection) => {
 
                 if(err){
                     connection.release();
@@ -150,40 +139,63 @@ class User{
                     
                 });
             });
-        }).catch(err => {
-            return false;
         })
     }
 
-    static transfer(from, to, amount){
+    /* static isBalance(amount, user){
         return new Promise((resolve, reject) => {
             pool.getConnection(async (err, connection) => {
+
+                if(err){
+                    connection.release();
+                    reject(err);
+                }
+                
+                connection.query(`select balance from users where username = ?`, [user], (err, rows) => {
+                    connection.release();
+
+                    if(err){
+                        reject(err);
+                    }
+                    console.log('checking balance');
+                    if(rows[0].balance >= amount){
+                        resolve(rows[0].balance);
+                    }
+                    else{
+                        reject(new Error('Not enough'))
+                    }
+
+                    
+                });
+            });
+        })
+    } */
+
+    static transfer(from, to, amount){
+        return new Promise((resolve, reject) => {
+            pool.getConnection((err, connection) => {
                 if(err){
                     connection.release();
                     reject(err);
                     return;
                 }
-                new Promise((resolve, reject) => {
-                    connection.query(`select balance from users where username = ?`, [from], (err, rows) => {
+                connection.beginTransaction((err) => {
+                    
+                    if(err){
+                        connection.release();
+                        reject(err);
+                        return;
+                    }
+                    connection.query('update users set balance = balance - ? where username = ?', [amount, from], (err, rows) => {
                         if(err){
-                            connection.release();
-                            return reject(false);
+                            connection.rollback(() => {
+                                connection.release();
+                                reject(err);
+                                return;
+                            })
                         }
-                        if(rows[0].balance < amount){
-                            connection.release();
-                            return reject(false);
-                        }
-                        resolve(true);
-                    })
-                })
-                .then(res => {
-                    connection.beginTransaction((err) => {
-                        if(err){
-                            connection.release();
-                            reject(err);
-                            return;
-                        }
-                        connection.query('update users set balance = balance - ? where username = ?', [amount, from], (err, rows) => {
+                        console.log('transfering...')
+                        connection.query('update users set balance = balance + ? where username = ?', [amount, to], (err, rows) => {
                             if(err){
                                 connection.rollback(() => {
                                     connection.release();
@@ -191,7 +203,7 @@ class User{
                                     return;
                                 })
                             }
-                            connection.query('update users set balance = balance + ? where username = ?', [amount, to], (err, rows) => {
+                            connection.commit((err) => {
                                 if(err){
                                     connection.rollback(() => {
                                         connection.release();
@@ -199,24 +211,11 @@ class User{
                                         return;
                                     })
                                 }
-                                connection.commit((err) => {
-                                    if(err){
-                                        connection.rollback(() => {
-                                            connection.release();
-                                            reject(err);
-                                            return;
-                                        })
-                                    }
-                                    resolve(true);
-                                })
+                                resolve(true);
                             })
                         })
                     })
                 })
-                .catch(err => {
-                    return reject(false);
-                })
-
                 
             })
         })

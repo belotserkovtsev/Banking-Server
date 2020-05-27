@@ -36,8 +36,14 @@ passport.serializeUser((user, done) => {
 })
 
 passport.deserializeUser(async (user, done) => {
-    let userdata = await User.get(user);
-    done(null, userdata[0]);
+    await User.get(user)
+    .then(res => {
+        done(null, res[0]);
+    })
+    .catch(err => {
+        done(null, false);
+    })
+    
 })
 
 const auth = passport.authenticate('local', {
@@ -69,7 +75,10 @@ app.post('/register', async (req, res) => {
         res.redirect(`/register?username=${req.body.username}&firstname=${req.body.firstname}&lastname=${req.body.lastname}`);
     }
     else{
-        await User.add(req.body.username, req.body.firstname, req.body.lastname, req.body.password);
+        User.add(req.body.username, req.body.firstname, req.body.lastname, req.body.password)
+        .catch(err => {
+            console.log('Error with adding user')
+        })
         res.redirect('/');
     }
     
@@ -96,8 +105,12 @@ app.get('/user', (req, res) => {
 })
 
 app.post('/user/add-balance', (req, res) => {
-    if(req.body.amount > 0)
-        User.addBalance(req.user.username, req.body.amount);
+    if(req.body.amount > 0){
+        User.addBalance(req.user.username, req.body.amount)
+        .catch(err => {
+            console.log('Error with adding balance')
+        })
+    }
     res.redirect('/user');
 });
 
@@ -107,15 +120,25 @@ app.post('/user/logout', (req, res) => {
 });
 
 app.post('/user/transfer', (req, res) => {
-    if(req.body.amount > 0){
-        User.transfer(req.user.username, req.body.to, req.body.amount)
-        .then(res => {
-            console.log(res);
-        })
-        .catch(err => {
-            console.log(false)
-        })
-    }
+    User.exists(req.body.to)
+    .then(res => {
+        if(req.body.amount > 0 && req.body.amount <= req.user.balance){
+            User.transfer(req.user.username, req.body.to, req.body.amount)
+            .then(res => {
+                console.log(res);
+            })
+            .catch(err => {
+                console.log(false)
+            })
+        }
+        else{
+            throw new Error('Amount is less than 0 or amount is more than you have');
+        }
+    })
+    .catch(err => {
+        console.log(err.message)
+    })
+    
     res.redirect('/user');
 })
 
