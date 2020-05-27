@@ -70,18 +70,26 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
-    // console.log(req);
-    if(!req.body.username || !req.body.firstname || !req.body.lastname || !req.body.password || await User.exists(req.body.username)){
+    if(!req.body.username || !req.body.firstname || !req.body.lastname || !req.body.password)
         res.redirect(`/register?username=${req.body.username}&firstname=${req.body.firstname}&lastname=${req.body.lastname}`);
-    }
     else{
-        User.add(req.body.username, req.body.firstname, req.body.lastname, req.body.password)
-        .catch(err => {
-            console.log('Error with adding user')
+        User.exists(req.body.username)
+        .then(resp => {
+            console.log('user exists');
+            res.redirect(`/register?firstname=${req.body.firstname}&lastname=${req.body.lastname}`);
         })
-        res.redirect('/');
+        .catch(err => {
+            console.log(err.message);
+            User.add(req.body.username, req.body.firstname, req.body.lastname, req.body.password)
+            .then(resp => {
+                res.redirect('/');
+            })
+            .catch(err => {
+                console.log(err.message);
+                res.redirect('/');
+            })
+        })
     }
-    
 })
 
 const mustBeAuth = (req, res, next) => {

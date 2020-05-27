@@ -17,19 +17,17 @@ class User{
             pool.getConnection(async (err, connection) => {
                 if(err){
                     connection.release();
-                    reject(err);
+                    return reject(err);
                 }
-                // let passHash = passwordHash.generate(password);
                 let hashPass = await bcrypt.hash(password, saltRounds);
-                // console.log(passHash);
                 connection.query('insert into users (username, firstname, lastname, password, balance) values (?, ?, ?, ?, 0)', [username, firstname, lastname, hashPass], (err, rows) => {
                     connection.release();
 
                     if(err){
-                        reject(err);
+                        return reject(err);
                     }
 
-                    resolve(rows);
+                    return resolve(rows);
 
                 })
             })
@@ -41,19 +39,19 @@ class User{
             pool.getConnection((err, connection) => {
                 if(err){
                     connection.release();
-                    reject (err)
+                    return reject (err)
                 }
-                connection.query(`select * from users where username = "${username}"`, (err, rows) => {
+                connection.query(`select * from users where username = ?`, [username], (err, rows) => {
                     connection.release();
 
                     if(err){
-                        reject(err)
+                        return reject(err)
                     }
 
                     if(!rows.length)
-                        reject(new Error('No user found!'))
+                        return reject(new Error('No user found!'))
 
-                    resolve(true);
+                    return resolve(true);
                 })
             })
         })
