@@ -133,7 +133,7 @@ app.post('/user/transfer', (req, res) => {
     User.exists(req.body.to)
     .then(res => {
         if(req.body.amount > 0){
-            lock.acquire('key', () => {
+            lock.acquire(req.user.username, () => {
                 return User.isBalance(req.body.amount, req.user.username)
                 .then(res => {
                     return User.transfer(req.user.username, req.body.to, req.body.amount);
