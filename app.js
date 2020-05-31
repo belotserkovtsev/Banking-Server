@@ -71,7 +71,7 @@ app.get('/register', (req, res) => {
     });
 });
 
-app.post('/register', async (req, res) => {
+app.post('/register', (req, res) => {
     if(!req.body.username || !req.body.firstname || !req.body.lastname || !req.body.password)
         res.redirect(`/register?username=${req.body.username}&firstname=${req.body.firstname}&lastname=${req.body.lastname}`);
     else{
